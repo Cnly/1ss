@@ -1,0 +1,32 @@
+#! /usr/bin/env bash
+
+PROG_IDENTIFIER="$(basename $BASH_SOURCE)"
+BASEDIR=$(dirname "$BASH_SOURCE")
+LOGFILE="/var/log/shadowsocks.$PROG_IDENTIFIER.log"
+PIDFILE="/var/run/shadowsocks.$PROG_IDENTIFIER.pid"
+RUN_FILE="/var/run/$PROG_IDENTIFIER.active"
+LOCAL_ADDR="127.0.0.1"
+LOCAL_PORT="1080"
+
+if [ -z "$1" ]; then
+    if [ -f "$RUN_FILE" ]; then
+        echo "Config in use: $(basename $(readlink -n $RUN_FILE))"
+    else
+        echo "No config in use."
+    fi
+    echo "Provide a config name as argument to switch to a different config."
+    echo "Available choices: "
+    echo "$(ls -x $BASEDIR/servers)"
+    exit 1
+fi
+
+if [ ! -f "$BASEDIR/servers/$1" ]; then
+    echo "Config does not exist. Doing nothing."
+    exit 1
+fi
+
+sudo rm -f "$RUN_FILE"
+sudo ln -s "$(realpath $BASEDIR)/servers/$1" "$RUN_FILE"
+
+sudo "$BASEDIR/shadowsocks/shadowsocks/local.py" --pid-file="$PIDFILE" -d stop > /dev/null 2>&1
+sudo "$BASEDIR/shadowsocks/shadowsocks/local.py" -c "$RUN_FILE" --log-file="$LOGFILE" --pid-file="$PIDFILE" -b "$LOCAL_ADDR" -l $LOCAL_PORT -d start
