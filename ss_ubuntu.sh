@@ -53,7 +53,7 @@ read PASSWD
 
 . /etc/lsb-release
 
-vercomp $DISTRIB_RELEASE "16.04"
+vercomp $DISTRIB_RELEASE '16.04'
 
 case $? in
     1)
@@ -142,7 +142,7 @@ EOF
 
 sysctl --system
 
-systemctl start shadowsocks-libev-server@okss.service
+systemctl enable --now shadowsocks-libev-server@okss.service
 
 echo "DONE!"
 echo "-----CONFIG FILE FOR CLIENTS BELOW-----"
