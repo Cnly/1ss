@@ -55,20 +55,22 @@ read PASSWD
 
 vercomp $DISTRIB_RELEASE "16.04"
 
-if [ $? ！= 0 ]; then
-    echo "You are using Ubuntu 16.04 or older, so we will use PPA"
+case $? in
+    2)
+        echo "You are using Ubuntu 16.04 or older, so we will use PPA"
     
-    (apt install software-properties-common -y && add-apt-repository ppa:max-c-lv/shadowsocks-libev -y && apt update && apt install shadowsocks-libev) || {
-        echo "Error occurred. Try again later."
-        exit 1
-    }
-
-else
-    (apt update && apt -y install shadowsocks-libev) || {
-        echo "Error occurred. Try again later."
-        exit 1
-    }
-fi
+        (apt install software-properties-common -y && add-apt-repository ppa:max-c-lv/shadowsocks-libev -y && apt update && apt install shadowsocks-libev) || {
+            echo "Error occurred. Try again later."
+            exit 1
+        }
+    ;;
+    *)
+        (apt update && apt -y install shadowsocks-libev) || {
+            echo "Error occurred. Try again later."
+            exit 1
+        }
+    ;;
+esac
 
 IP=`curl ipecho.net/plain`
 if [ -z "$PASSWD" ]; then
