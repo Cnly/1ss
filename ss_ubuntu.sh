@@ -13,26 +13,17 @@ fi
 echo "Password(leave empty for random): "
 read PASSWD
 
-(apt-get update && apt-get -y install git python) || {
+(apt update && apt -y install git shadowsocks-libev) || {
     echo "Error occurred. Try again later."
     exit 1
 }
-
-git clone https://github.com/shadowsocks/shadowsocks
-
-cd shadowsocks
-
-git checkout origin/master
-
-cd ..
-mkdir .ss
 
 IP=`curl ipecho.net/plain`
 if [ -z "$PASSWD" ]; then
     PASSWD=`< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c${1:-32};`
 fi
 
-cat << EOF > $PWD/.ss/config.json
+cat << EOF > /etc/shadowsocks-libev/okss.json
 {
     "server":"0.0.0.0",
     "server_port":$PORT,
@@ -96,11 +87,9 @@ EOF
 
 sysctl --system
 
-(crontab -l; echo "@reboot $PWD/shadowsocks/shadowsocks/server.py -c $PWD/.ss/config.json -d start") | crontab
-
-$PWD/shadowsocks/shadowsocks/server.py -c $PWD/.ss/config.json -d start
+systemctl start shadowsocks-libev-server@okss.service
 
 echo "DONE!"
 echo "-----CONFIG FILE FOR CLIENTS BELOW-----"
 
-cat $PWD/.ss/config.json | sed "s/0.0.0.0/$IP/g"
+cat /etc/shadowsocks-libev/okss.json | sed "s/0.0.0.0/$IP/g"
