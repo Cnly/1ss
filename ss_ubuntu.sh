@@ -56,16 +56,17 @@ read PASSWD
 vercomp $DISTRIB_RELEASE "16.04"
 
 case $? in
-    2)
-        echo "You are using Ubuntu 16.04 or older, so we will use PPA"
-    
-        (apt install software-properties-common -y && add-apt-repository ppa:max-c-lv/shadowsocks-libev -y && apt update && apt install shadowsocks-libev) || {
+    1)
+        (apt update && apt -y install shadowsocks-libev) || {
             echo "Error occurred. Try again later."
             exit 1
         }
     ;;
     *)
-        (apt update && apt -y install shadowsocks-libev) || {
+        
+        echo "You are using Ubuntu 16.04 or older, so we will use PPA"
+    
+        (apt install software-properties-common -y && add-apt-repository ppa:max-c-lv/shadowsocks-libev -y && apt update && apt install shadowsocks-libev) || {
             echo "Error occurred. Try again later."
             exit 1
         }
