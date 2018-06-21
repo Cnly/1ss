@@ -1,4 +1,42 @@
-#! /usr/bin/env bash
+#!/usr/bin/env bash
+
+if [[ $UID != 0 ]]; then
+    echo "Please run this script with sudo:"
+    echo "sudo $0 $*"
+    exit 1
+fi
+
+
+vercomp () {
+    if [[ $1 == $2 ]]
+    then
+        return 0
+    fi
+    local IFS=.
+    local i ver1=($1) ver2=($2)
+    # fill empty fields in ver1 with zeros
+    for ((i=${#ver1[@]}; i<${#ver2[@]}; i++))
+    do
+        ver1[i]=0
+    done
+    for ((i=0; i<${#ver1[@]}; i++))
+    do
+        if [[ -z ${ver2[i]} ]]
+        then
+            # fill empty fields in ver2 with zeros
+            ver2[i]=0
+        fi
+        if ((10#${ver1[i]} > 10#${ver2[i]}))
+        then
+            return 1
+        fi
+        if ((10#${ver1[i]} < 10#${ver2[i]}))
+        then
+            return 2
+        fi
+    done
+    return 0
+}
 
 echo "Deploying for Ubuntu..."
 
@@ -10,29 +48,37 @@ if [ -z $PORT ]; then
     exit 1
 fi
 
-echo "Password(leave empty for random): "
+echo "Password (leave empty for random): "
 read PASSWD
 
-(apt-get update && apt-get -y install git python) || {
-    echo "Error occurred. Try again later."
-    exit 1
-}
+. /etc/lsb-release
 
-git clone https://github.com/shadowsocks/shadowsocks
+vercomp $DISTRIB_RELEASE '16.04'
 
-cd shadowsocks
-
-git checkout origin/master
-
-cd ..
-mkdir .ss
+case $? in
+    1)
+        (apt update && apt -y install shadowsocks-libev) || {
+            echo "Error occurred. Try again later."
+            exit 1
+        }
+    ;;
+    *)
+        
+        echo "You are using Ubuntu 16.04 or older, so we will use PPA"
+    
+        (apt install software-properties-common -y && add-apt-repository ppa:max-c-lv/shadowsocks-libev -y && apt update && apt install shadowsocks-libev -y) || {
+            echo "Error occurred. Try again later."
+            exit 1
+        }
+    ;;
+esac
 
 IP=`curl ipecho.net/plain`
 if [ -z "$PASSWD" ]; then
     PASSWD=`< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c${1:-32};`
 fi
 
-cat << EOF > $PWD/.ss/config.json
+cat << EOF > /etc/shadowsocks-libev/okss.json
 {
     "server":"0.0.0.0",
     "server_port":$PORT,
@@ -94,13 +140,11 @@ net.ipv4.tcp_mtu_probing = 1
 # net.ipv4.tcp_congestion_control = cubic
 EOF
 
-sysctl --system
+sysctl --system -q
 
-(crontab -l; echo "@reboot $PWD/shadowsocks/shadowsocks/server.py -c $PWD/.ss/config.json -d start") | crontab
-
-$PWD/shadowsocks/shadowsocks/server.py -c $PWD/.ss/config.json -d start
+systemctl enable --now shadowsocks-libev-server@okss.service
 
 echo "DONE!"
 echo "-----CONFIG FILE FOR CLIENTS BELOW-----"
 
-cat $PWD/.ss/config.json | sed "s/0.0.0.0/$IP/g"
+cat /etc/shadowsocks-libev/okss.json | sed "s/0.0.0.0/$IP/g"
