@@ -82,8 +82,6 @@ cat << EOF > /etc/shadowsocks-libev/okss.json
 {
     "server":"0.0.0.0",
     "server_port":$PORT,
-    "local_address": "127.0.0.1",
-    "local_port":8010,
     "password":"$PASSWD",
     "timeout":300,
     "method":"aes-256-cfb",
