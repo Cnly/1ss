@@ -2,7 +2,6 @@
 
 PROG_IDENTIFIER="$(basename $BASH_SOURCE)"
 BASEDIR=$(dirname "$BASH_SOURCE")
-LOGFILE="/var/log/shadowsocks.$PROG_IDENTIFIER.log"
 PIDFILE="/var/run/shadowsocks.$PROG_IDENTIFIER.pid"
 RUN_FILE="/var/run/$PROG_IDENTIFIER.active"
 LOCAL_ADDR="127.0.0.1"
@@ -28,5 +27,5 @@ fi
 sudo rm -f "$RUN_FILE"
 sudo ln -s "$(realpath $BASEDIR)/servers/$1" "$RUN_FILE"
 
-sudo "$BASEDIR/shadowsocks/shadowsocks/local.py" --pid-file="$PIDFILE" -d stop > /dev/null 2>&1
-sudo "$BASEDIR/shadowsocks/shadowsocks/local.py" -c "$RUN_FILE" --log-file="$LOGFILE" --pid-file="$PIDFILE" -b "$LOCAL_ADDR" -l $LOCAL_PORT -d start
+sudo kill -2 "$(cat $PIDFILE > /dev/null 2>&1)" > /dev/null 2>&1
+sudo "ss-local" -c "$RUN_FILE" -f "$PIDFILE" -b "$LOCAL_ADDR" -l $LOCAL_PORT
