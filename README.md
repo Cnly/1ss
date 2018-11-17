@@ -1,2 +1,2 @@
-# okss
+# 1ss
 One-key Shadowsocks deployment
