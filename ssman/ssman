@@ -27,5 +27,6 @@ fi
 sudo rm -f "$RUN_FILE"
 sudo ln -s "$(realpath $BASEDIR)/servers/$1" "$RUN_FILE"
 
-sudo kill -2 "$(cat $PIDFILE > /dev/null 2>&1)" > /dev/null 2>&1
+sudo kill -2 "$(cat $PIDFILE 2> /dev/null)" > /dev/null 2>&1
+sudo rm -f "$PIDFILE"
 sudo "ss-local" -c "$RUN_FILE" -f "$PIDFILE" -b "$LOCAL_ADDR" -l $LOCAL_PORT
