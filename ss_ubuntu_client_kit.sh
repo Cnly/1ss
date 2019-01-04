@@ -1,11 +1,11 @@
 #! /bin/bash
 
 # To avoid installing any of these components, comment out the corresponding line(s) below
-INSTALL_PROXYCHAINS_NG="git gcc make"
+INSTALL_PROXYCHAINS_NG="unzip ca-certificates curl libc6-dev gcc make"
 INSTALL_POLIPO="polipo"
 # ###
 
-apt update && apt install -y shadowsocks-libev ${INSTALL_PROXYCHAINS_NG} ${INSTALL_POLIPO}
+apt update && apt install -y --no-install-recommends shadowsocks-libev ${INSTALL_PROXYCHAINS_NG} ${INSTALL_POLIPO}
 
 echo "Enter your desired shadowsocks local port (press ENTER for default, 1080):"
 read LOCAL_PORT
@@ -38,14 +38,15 @@ if [ "${INSTALL_PROXYCHAINS_NG}" ]; then
 	echo "Building proxychains-ng..."
 	TMP_DIR="$(mktemp -d)"
 	ORIG_DIR="$(pwd)"
-	git clone --depth 1 https://github.com/rofl0r/proxychains-ng.git ${TMP_DIR}
-	cd ${TMP_DIR}
+	curl -vL https://github.com/rofl0r/proxychains-ng/archive/master.zip -o "${TMP_DIR}/proxychains-ng.zip"
+	unzip "${TMP_DIR}/proxychains-ng.zip" -d "${TMP_DIR}/build"
+	cd "${TMP_DIR}/build/proxychains-ng-master"
 	./configure --prefix=/usr --sysconfdir=/etc
 	make install
 	make install-config
 	sed -i "s/socks4 	127.0.0.1 9050/socks5	127.0.0.1 ${LOCAL_PORT}/" /etc/proxychains.conf
-	rm -rf ${TMP_DIR}
-	cd ${ORIG_DIR}
+	cd "${ORIG_DIR}"
+	rm -rf "${TMP_DIR}"
 fi
 
 POLIPO_CONFIG_PATH="/etc/polipo/config"
